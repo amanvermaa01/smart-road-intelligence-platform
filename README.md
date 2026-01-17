@@ -56,16 +56,14 @@ This repository serves as both:
 ### Main Intelligence Dashboard
 
 > Real-time signal feed, route planning, and incident visualization
-
-![Dashboard View](docs/images/Screenshot (64).png)
+[Dashboard View](docs/images/Screenshot (64).png)
 
 ---
 
 ### Temporal Analysis & Heatmap View
 
 > Traffic heatmap with time-window controls and resolution tuning
-
-![Temporal Heatmap View](docs/images/Screenshot (65).png)
+[Temporal Heatmap View](docs/images/Screenshot (65).png)
 
 ---
 
