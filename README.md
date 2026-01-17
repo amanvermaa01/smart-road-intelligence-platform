@@ -53,19 +53,40 @@ This repository serves as both:
 
 ## 🖥️ UI Preview
 
-### Main Intelligence Dashboard
+The screenshots below are captured from a **locally running instance** of the Smart Road Intelligence Platform with **live routing, incident simulation, and traffic intelligence enabled**.
 
-> Real-time signal feed, route planning, and incident visualization
-[Dashboard View](docs/images/Screenshot (64).png)
+They showcase how real-time data flows from backend services into a **map-centric operational interface**.
+
+---
+
+### Live Routing & Incident Intelligence Dashboard
+
+This is the **primary operational interface** used for real-time navigation and decision-making.
+
+Key capabilities shown:
+
+- Live signal feed with severity-based filtering
+- User’s current location plotted as the routing origin
+- Incident-aware route visualization
+- Route strategy evaluation (distance, ETA, optimality)
+- Navigation execution via *Initiate Navigation Sequence*
+
+![Live Routing Dashboard](docs/images/Screenshot%20(64).png)
 
 ---
 
-### Temporal Analysis & Heatmap View
+### Temporal Analysis & Traffic Heatmap View
 
-> Traffic heatmap with time-window controls and resolution tuning
-[Temporal Heatmap View](docs/images/Screenshot (65).png)
+This view highlights the platform’s **analytical and monitoring capabilities**.
 
----
+Key capabilities shown:
+
+- Traffic heatmap overlay (severity-weighted)
+- Adjustable temporal window for historical and near-real-time analysis
+- Resolution tuning for performance vs accuracy
+- Correlation of incidents with congestion hotspots
+
+![Temporal Heatmap Analysis](docs/images/Screenshot%20(65).png)
 
 ## 🏗️ Architecture Overview
 
