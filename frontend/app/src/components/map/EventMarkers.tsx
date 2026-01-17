@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import { useEventStore } from "@/app/src/stores/eventStore";
+import { useDashboardFilters } from "../../stores/filters.store";
 import { deleteEvent } from "@/app/src/services/eventApi";
 import { voteEvent } from "@/app/src/services/eventApi";
 import { toast } from "sonner";
@@ -15,22 +16,37 @@ const getColor = (severity: number, type?: string) => {
 };
 
 export default function EventMarkers({ mapRef }: { mapRef: React.RefObject<maplibregl.Map | null> }) {
-    const events = useEventStore((s) => s.events);
+    const rawEvents = useEventStore((s) => s.events);
+    const { severity: filterSev, eventType: filterType, hoursAgo } = useDashboardFilters();
     const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+
+    // Filter events based on global filters
+    const filteredEvents = new Map([...rawEvents].filter(([_, event]) => {
+        if (filterSev && event.severity < Number(filterSev)) return false;
+        if (filterType && event.type !== filterType) return false;
+
+        if (hoursAgo) {
+            const eventTime = new Date(event.timestamp).getTime();
+            const cutoff = Date.now() - (hoursAgo * 60 * 60 * 1000);
+            if (eventTime < cutoff) return false;
+        }
+
+        return true;
+    }));
 
     useEffect(() => {
         if (!mapRef.current) return;
 
-        // Remove markers that are no longer in the store
+        // Remove markers that are no longer in the filtered set
         markersRef.current.forEach((marker, id) => {
-            if (!events.has(id)) {
+            if (!filteredEvents.has(id)) {
                 marker.remove();
                 markersRef.current.delete(id);
             }
         });
 
-        // Add or update markers from the store
-        events.forEach((event, id) => {
+        // Add or update markers from the filtered set
+        filteredEvents.forEach((event, id) => {
             if (!markersRef.current.has(id)) {
                 const color = getColor(event.severity, event.type);
                 const icon = event.type === 'accident' ? '🚨' : event.type === 'pothole' ? '🕳' : event.type === 'flooding' ? '🌊' : '❓';
@@ -202,7 +218,7 @@ export default function EventMarkers({ mapRef }: { mapRef: React.RefObject<mapli
                 markersRef.current.set(id, marker);
             }
         });
-    }, [events, mapRef]);
+    }, [filteredEvents, mapRef]);
 
     return null;
 }

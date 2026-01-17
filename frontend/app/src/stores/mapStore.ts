@@ -15,6 +15,8 @@ interface MapState {
   setResolution: (res: '5m' | '15m' | '1h') => void;
   isPlaying: boolean;
   setIsPlaying: (v: boolean) => void;
+  bbox: string | null;
+  setBbox: (v: string | null) => void;
 }
 
 const defaultFrom = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -35,4 +37,6 @@ export const useMapStore = create<MapState>((set) => ({
   setResolution: (resolution) => set({ resolution }),
   isPlaying: false,
   setIsPlaying: (isPlaying) => set({ isPlaying }),
+  bbox: null,
+  setBbox: (bbox) => set({ bbox }),
 }));

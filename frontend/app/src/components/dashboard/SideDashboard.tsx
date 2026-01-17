@@ -4,8 +4,11 @@ import { HazardSummaryCard } from "./HazardSummaryCard";
 import { FiltersPanel } from "./FiltersPanel";
 import { EventFeedList } from "./EventFeedList";
 import { LiveAlertsToast } from "./LiveAlertsToast";
+import { useRouteStore } from "../../stores/routeStore";
 
 export function SideDashboard() {
+    const { selectedRouteId } = useRouteStore();
+
     return (
         <aside className="w-[400px] glass-panel flex flex-col shadow-2xl z-20 border-l border-white/5">
             <div className="p-8 border-b border-white/5 bg-white/5">
@@ -19,7 +22,7 @@ export function SideDashboard() {
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-1 space-y-6">
-                <HazardSummaryCard />
+                <HazardSummaryCard routeId={selectedRouteId} />
 
                 <div className="px-4">
                     <div className="glass-card rounded-2xl p-1">

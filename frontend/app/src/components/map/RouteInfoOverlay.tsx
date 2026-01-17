@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouteStore } from "../../stores/routeStore";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 export function RouteInfoOverlay() {
     const {
@@ -8,10 +10,47 @@ export function RouteInfoOverlay() {
         alternativeRoute,
         selectedRouteType,
         setSelectedRouteType,
-        isBlocked
+        isBlocked,
+        isNavigating,
+        setIsNavigating,
+        hazardSummary
     } = useRouteStore();
 
+    // Show suggestion toast when a hazardous route is initially loaded or selected
+    useEffect(() => {
+        if (route && alternativeRoute && selectedRouteType === 'primary') {
+            toast.warning("Hazard detected on primary route", {
+                description: "We've calculated a safer alternative. Consider switching to avoid delays.",
+                action: {
+                    label: "Switch Now",
+                    onClick: () => setSelectedRouteType('alternative')
+                },
+                duration: 10000,
+            });
+        }
+    }, [route, alternativeRoute, selectedRouteType, setSelectedRouteType]);
+
     if (!route) return null;
+
+    if (isNavigating) {
+        return (
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-50">
+                <div className="glass-panel p-6 rounded-3xl shadow-2xl border border-blue-500/30 flex items-center gap-6 animate-in slide-in-from-bottom-10">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest animate-pulse">Navigation Active</span>
+                        <h2 className="text-xl font-black text-white uppercase tracking-tighter">Heading to Destination</h2>
+                    </div>
+                    <div className="h-10 w-px bg-white/10" />
+                    <button
+                        onClick={() => setIsNavigating(false)}
+                        className="px-8 py-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors"
+                    >
+                        End Trip
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const displayRoute = selectedRouteType === 'primary' ? route : (alternativeRoute || route);
     const distanceKm = (displayRoute.coordinates.length * 0.15).toFixed(1);
@@ -27,11 +66,13 @@ export function RouteInfoOverlay() {
                             {selectedRouteType === 'primary' ? 'Direct Path' : 'Safe Alternative'}
                         </h2>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${selectedRouteType === 'primary' && isBlocked
-                            ? 'bg-red-500/10 text-red-500 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]'
-                            : 'bg-green-500/10 text-green-500 border border-green-500/20'
+                    <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${selectedRouteType === 'primary' && (isBlocked || alternativeRoute)
+                        ? 'bg-red-500/10 text-red-500 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]'
+                        : 'bg-green-500/10 text-green-500 border border-green-500/20'
                         }`}>
-                        {selectedRouteType === 'primary' && isBlocked ? '⚠ Hazardous' : '✓ Optimal'}
+                        {selectedRouteType === 'primary' && (isBlocked || alternativeRoute)
+                            ? `⚠ ${hazardSummary?.totalHazards || ''} Hazards Detected`
+                            : '✓ Optimal Path'}
                     </div>
                 </div>
 
@@ -42,7 +83,7 @@ export function RouteInfoOverlay() {
                             className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedRouteType === 'primary' ? 'bg-white/10 text-white shadow-lg' : 'text-white/40 hover:text-white/60'
                                 }`}
                         >
-                            Primary {isBlocked && '⚠'}
+                            Primary {alternativeRoute && '⚠'}
                         </button>
                         <button
                             onClick={() => setSelectedRouteType('alternative')}
@@ -65,7 +106,7 @@ export function RouteInfoOverlay() {
                     </div>
                 </div>
 
-                {selectedRouteType === 'primary' && isBlocked && (
+                {selectedRouteType === 'primary' && (isBlocked || alternativeRoute) && (
                     <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 mb-4 animate-pulse">
                         <p className="text-[11px] text-red-400 font-bold leading-relaxed text-center">
                             Hazard identified on this path. Switching to the alternative is highly advised.
@@ -73,7 +114,15 @@ export function RouteInfoOverlay() {
                     </div>
                 )}
 
-                <button className="w-full py-4 rounded-2xl bg-blue-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,130,246,0.5)] hover:scale-[1.02] active:scale-95 transition-all">
+                <button
+                    onClick={() => {
+                        setIsNavigating(true);
+                        toast.success("Navigation Initiated", {
+                            description: "Trip tracing and real-time hazard monitoring is now active."
+                        });
+                    }}
+                    className="w-full py-4 rounded-2xl bg-blue-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(59,130,246,0.5)] hover:scale-[1.02] active:scale-95 transition-all pointer-events-auto"
+                >
                     Initiate Navigation Sequence
                 </button>
             </div>

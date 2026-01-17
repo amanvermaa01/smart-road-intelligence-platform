@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDashboardFilters } from "../../stores/filters.store";
 import { useMapStore } from "../../stores/mapStore";
 import { fetchHeatmapData } from "../../services/analytics";
@@ -24,21 +24,31 @@ export function FiltersPanel({ onChange }: Props) {
         hoursAgo, setHoursAgo
     } = useDashboardFilters();
 
-    const { showHeatmap, setShowHeatmap, heatmapData, setHeatmapData } = useMapStore();
+    const { showHeatmap, setShowHeatmap, heatmapData, setHeatmapData, bbox } = useMapStore();
 
-    const fetchHeatmap = async () => {
+    const fetchHeatmap = useCallback(async () => {
+        if (!bbox) return;
         try {
+            // If hoursAgo is undefined (ALL), look back 10 years
+            const lookbackHours = hoursAgo || (24 * 365 * 10);
             const res = await fetchHeatmapData({
-                from: new Date(Date.now() - (hoursAgo || 24) * 60 * 60 * 1000).toISOString(),
+                from: new Date(Date.now() - lookbackHours * 60 * 60 * 1000).toISOString(),
                 to: new Date().toISOString(),
-                bbox: "26.7,80.8,27.0,81.1", // Default view for Lucknow area or get from map
+                bbox: bbox,
                 resolution: "5m",
             });
             setHeatmapData(res.buckets);
         } catch (err) {
             console.error("Failed to fetch heatmap:", err);
         }
-    };
+    }, [hoursAgo, setHeatmapData, bbox]);
+
+    // Refetch heatmap when time window or bbox changes if it's currently active
+    useEffect(() => {
+        if (showHeatmap) {
+            fetchHeatmap();
+        }
+    }, [hoursAgo, showHeatmap, fetchHeatmap, bbox]);
 
     // Sync local changes to parent via onChange if provided
     useEffect(() => {

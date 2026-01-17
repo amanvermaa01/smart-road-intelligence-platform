@@ -1,5 +1,7 @@
 import { HeatmapResponse } from "../types/analytics";
 
+const baseUrl = process.env.NEXT_PUBLIC_ANALYTICS_URL || 'http://127.0.0.1:3004';
+
 export async function fetchHeatmapData(params: {
   from: string;
   to: string;
@@ -7,7 +9,6 @@ export async function fetchHeatmapData(params: {
   resolution: string;
 }, signal?: AbortSignal): Promise<HeatmapResponse> {
   const query = new URLSearchParams(params).toString();
-  const baseUrl = process.env.NEXT_PUBLIC_ANALYTICS_URL || 'http://localhost:3004';
 
   const res = await fetch(
     `${baseUrl}/analytics/heatmap?${query}`,

@@ -65,9 +65,9 @@ export class DashboardService {
     }
 
     return parsed.filter(e => {
-      if (severityMin !== undefined && e.severity < severityMin) return false;
-      if (type !== undefined && e.type !== type) return false;
-      if (hoursAgo !== undefined) {
+      if (severityMin != null && e.severity < severityMin) return false;
+      if (type != null && e.type !== type) return false;
+      if (hoursAgo != null) {
         const eventTime = new Date(e.timestamp).getTime();
         const cutoff = Date.now() - (hoursAgo * 60 * 60 * 1000);
         if (eventTime < cutoff) return false;

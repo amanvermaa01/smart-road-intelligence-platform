@@ -10,6 +10,9 @@ const GET_ROUTE = gql`
       geometry
       alternativeRoute
       isBlocked
+      hazardSummary {
+        totalHazards
+      }
     }
   }
 `;
@@ -36,5 +39,6 @@ export async function fetchRoute(
     geometry: data.getRoute.geometry,
     alternativeRoute: data.getRoute.alternativeRoute,
     isBlocked: data.getRoute.isBlocked,
+    hazardSummary: data.getRoute.hazardSummary,
   };
 }

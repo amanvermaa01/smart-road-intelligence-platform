@@ -5,9 +5,10 @@ import maplibregl, { Map, Marker } from "maplibre-gl";
 import { useRouteStore } from "@/app/src/stores/routeStore";
 import { fetchRoute } from "@/app/src/lib/routeApi";
 import { useEventSocket } from "@/app/src/hooks/useEventSocket";
-import { getBBoxFromMap } from "@/app/src/hooks/useMapBounds";
+import { getBBoxFromMap, getBBoxString } from "@/app/src/hooks/useMapBounds";
 import { useMapStore } from "@/app/src/stores/mapStore";
 import { RouteInfoOverlay } from "../map/RouteInfoOverlay";
+import { toast } from "sonner";
 import EventMarkers from "./EventMarkers";
 import ReportEventModal from "./ReportEventModal";
 import HeatmapLayer from "./HeatmapLayer";
@@ -19,8 +20,9 @@ export default function MapView() {
     const sourceMarker = useRef<Marker | null>(null);
     const destMarker = useRef<Marker | null>(null);
     const reportMarker = useRef<Marker | null>(null);
+    const userMarker = useRef<Marker | null>(null);
 
-    const [bbox, setBbox] = useState<{ north: number, south: number, east: number, west: number } | null>(null);
+    const [currentBBox, setCurrentBBox] = useState<{ north: number, south: number, east: number, west: number } | null>(null);
     const [clickedLocation, setClickedLocation] = useState<maplibregl.LngLat | null>(null);
     const [mapReady, setMapReady] = useState(false);
     const [isReportingMode, setIsReportingMode] = useState(false);
@@ -35,9 +37,9 @@ export default function MapView() {
         reset,
     } = useRouteStore();
 
-    const { flyToCoord, setFlyToCoord } = useMapStore();
+    const { flyToCoord, setFlyToCoord, setBbox: setGlobalBBox } = useMapStore();
 
-    useEventSocket(bbox);
+    useEventSocket(currentBBox);
 
     const placeSourceMarker = (coords: [number, number]) => {
         sourceMarker.current?.remove();
@@ -162,7 +164,7 @@ export default function MapView() {
         try {
             const data = await fetchRoute(start, end);
             if (data?.geometry?.coordinates) {
-                setRoute(data.geometry, data.alternativeRoute);
+                setRoute(data.geometry, data.alternativeRoute, data.hazardSummary);
                 setSelectedRouteId(data.id);
                 setIsBlocked(data.isBlocked);
                 drawRoute(data.geometry, data.alternativeRoute, data.isBlocked);
@@ -259,11 +261,13 @@ export default function MapView() {
 
         map.on("load", () => {
             setMapReady(true);
-            setBbox(getBBoxFromMap(map));
+            setCurrentBBox(getBBoxFromMap(map));
+            setGlobalBBox(getBBoxString(map));
         });
 
         map.on("moveend", () => {
-            setBbox(getBBoxFromMap(map));
+            setCurrentBBox(getBBoxFromMap(map));
+            setGlobalBBox(getBBoxString(map));
         });
 
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -273,6 +277,48 @@ export default function MapView() {
             map.remove();
         };
     }, [handleClick]);
+
+    const handleLocateMe = () => {
+        if (!navigator.geolocation) {
+            toast.error("Geolocation not supported", {
+                description: "Your browser does not support geolocation services."
+            });
+            return;
+        }
+
+        toast.info("Locating...", { description: "Requesting your current position." });
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const coords: [number, number] = [position.coords.longitude, position.coords.latitude];
+                setFlyToCoord(coords);
+
+                // Add marker for user location
+                if (userMarker.current) userMarker.current.remove();
+
+                const el = document.createElement('div');
+                el.className = 'w-5 h-5 bg-green-500 rounded-full border-4 border-white shadow-[0_0_20px_rgba(34,197,94,0.8)] animate-pulse relative';
+                const inner = document.createElement('div');
+                inner.className = 'absolute -inset-2 bg-green-500 rounded-full animate-ping opacity-20';
+                el.appendChild(inner);
+
+                userMarker.current = new maplibregl.Marker({ element: el })
+                    .setLngLat(coords)
+                    .addTo(mapInstance.current!);
+
+                toast.success("Location found", {
+                    description: `Centered map at ${coords[1].toFixed(4)}, ${coords[0].toFixed(4)}`
+                });
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                toast.error("Location failed", {
+                    description: error.message || "Unable to retrieve your location."
+                });
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+    };
 
     return (
         <div className="relative w-full h-full bg-[#020617]" suppressHydrationWarning>
@@ -311,6 +357,14 @@ export default function MapView() {
                 >
                     <span className="text-lg">{isReportingMode ? '✕' : '🚨'}</span>
                     {isReportingMode ? 'Cancel Selection' : 'Log Incident'}
+                </button>
+
+                <button
+                    onClick={handleLocateMe}
+                    className="flex items-center gap-3 px-6 py-4 rounded-2xl glass-panel text-white shadow-2xl transition-all hover:scale-105 active:scale-95 hover:bg-white/10"
+                    title="Find My Location"
+                >
+                    <span className="text-xs font-black uppercase tracking-widest whitespace-nowrap">Your Location</span>
                 </button>
             </div>
 

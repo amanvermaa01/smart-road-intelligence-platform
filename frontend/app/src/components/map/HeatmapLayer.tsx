@@ -45,18 +45,24 @@ export default function HeatmapLayer({ map }: Props) {
             type: "heatmap",
             source: sourceId,
             paint: {
-                "heatmap-weight": ["get", "intensity"],
+                "heatmap-weight": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "severity"],
+                    1, 0,
+                    5, 1
+                ],
                 "heatmap-intensity": 1,
                 "heatmap-radius": 20,
                 "heatmap-opacity": 0.8,
                 "heatmap-color": [
                     "interpolate",
                     ["linear"],
-                    ["get", "severity"],
+                    ["heatmap-density"],
                     0, "rgba(34, 197, 94, 0)",
-                    1, "rgb(34, 197, 94)",
-                    3, "rgb(234, 179, 8)",
-                    5, "rgb(239, 68, 68)",
+                    0.2, "rgb(34, 197, 94)",
+                    0.6, "rgb(234, 179, 8)",
+                    1, "rgb(239, 68, 68)",
                 ],
             },
         });

@@ -10,7 +10,8 @@ export default function TimeSlider() {
         timeRange, setTimeRange,
         resolution, setResolution,
         isPlaying, setIsPlaying,
-        setHeatmapData
+        setHeatmapData,
+        bbox
     } = useMapStore();
 
     const [sliderValue, setSliderValue] = useState(100); // 0 to 100 percentage of the last 24h
@@ -45,7 +46,7 @@ export default function TimeSlider() {
             const data = await fetchHeatmapData({
                 from,
                 to,
-                bbox: "26.7,80.8,27.0,81.1", // Lucknow default
+                bbox: bbox || "26.7,80.8,27.0,81.1",
                 resolution: res
             }, abortControllerRef.current.signal);
 
@@ -55,7 +56,7 @@ export default function TimeSlider() {
                 console.error("Failed to fetch heatmap data:", err);
             }
         }
-    }, [sliderValue, showHeatmap, setHeatmapData, setResolution, setTimeRange]);
+    }, [sliderValue, showHeatmap, setHeatmapData, setResolution, setTimeRange, bbox]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -84,8 +85,8 @@ export default function TimeSlider() {
                         <button
                             onClick={() => setIsPlaying(!isPlaying)}
                             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg ${isPlaying
-                                    ? 'bg-blue-500 text-white shadow-blue-500/30'
-                                    : 'bg-white/5 text-white/70 hover:bg-white/10'
+                                ? 'bg-blue-500 text-white shadow-blue-500/30'
+                                : 'bg-white/5 text-white/70 hover:bg-white/10'
                                 }`}
                         >
                             <span className="text-xl">{isPlaying ? "⏸" : "▶"}</span>
