@@ -1,0 +1,23 @@
+config:
+  target: "ws://localhost:3002"
+  socketio:
+    transports: ["websocket"]
+  phases:
+    - duration: 60
+      arrivalRate: 50
+      rampTo: 1000
+      name: "Ramp to 1k concurrent sockets"
+
+scenarios:
+  - engine: socketio
+    name: "Subscribe to bounding box"
+    flow:
+      - emit:
+          channel: "subscribe"
+          data:
+            bbox:
+              north: 28.7041
+              south: 28.5355
+              east: 77.3910
+              west: 77.1025
+      - think: 30

@@ -1,0 +1,103 @@
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: rip-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U "]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: rip-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.1
+    container_name: rip-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.1
+    container_name: rip-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    restart: unless-stopped
+
+    ports:
+      # HTTP interface (queries, health checks)
+      - "8123:8123"
+      # Native TCP interface (high-performance clients)
+      - "9000:9000"
+
+    volumes:
+      # Persistent ClickHouse data
+      - clickhouse_data:/var/lib/clickhouse
+      - ./infra/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./infra/clickhouse/migrations:/docker-entrypoint-initdb.d/migrations
+
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  clickhouse_data:
+    driver: local
+  pgdata:

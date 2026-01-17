@@ -1,0 +1,7 @@
+packages:
+  - "frontend"
+  - "backend-gateway"
+  - "route-service"
+  - "event-service"
+  - "ml-service"
+  - "analytics-service"

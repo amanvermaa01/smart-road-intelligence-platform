@@ -1,0 +1,69 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type EventFeedItem {
+  description: String
+  downvotes: Int!
+  id: ID!
+  lat: Float
+  lng: Float
+  routeId: ID!
+  severity: Int!
+  timestamp: DateTime!
+  type: String!
+  upvotes: Int!
+}
+
+type HazardCount {
+  count: Int!
+  type: String!
+}
+
+"""Custom JSON scalar"""
+scalar JSON
+
+type LiveAlert {
+  createdAt: DateTime!
+  id: ID!
+  message: String!
+  routeId: ID!
+  severity: Int!
+}
+
+type Mutation {
+  deleteEvent(id: String!): Boolean!
+  voteEvent(id: String!, type: String!): Boolean!
+}
+
+type Query {
+  eventFeed(hoursAgo: Int, limit: Int! = 20, routeId: String, severityMin: Int, type: String): [EventFeedItem!]!
+  getRoute(endLat: Float!, endLng: Float!, startLat: Float!, startLng: Float!): RouteResponse!
+  routeHazardSummary(routeId: String!): RouteHazardSummary!
+}
+
+type RouteHazardSummary {
+  bySeverity: [HazardCount!]!
+  byType: [HazardCount!]!
+  routeId: ID!
+  totalHazards: Int!
+}
+
+type RouteResponse {
+  alternativeRoute: JSON
+  distanceMeters: Float!
+  etaSeconds: Float!
+  geometry: JSON!
+  hazardSummary: RouteHazardSummary
+  id: String!
+  isBlocked: Boolean!
+}
+
+type Subscription {
+  liveAlerts(routeId: String): LiveAlert!
+}
