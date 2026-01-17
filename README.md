@@ -57,7 +57,7 @@ This repository serves as both:
 
 > Real-time signal feed, route planning, and incident visualization
 
-![Dashboard View](./docs/images/screenshot-64.png)
+![Dashboard View](./docs/images/Screenshot (64).png)
 
 ---
 
@@ -65,7 +65,7 @@ This repository serves as both:
 
 > Traffic heatmap with time-window controls and resolution tuning
 
-![Temporal Heatmap View](./docs/images/screenshot-65.png)
+![Temporal Heatmap View](./docs/images/Screenshot (65).png)
 
 ---
 
